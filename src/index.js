@@ -3,10 +3,11 @@ const { types: t } = require('@babel/core');
 const { parse } = require("intl-messageformat-parser");
 
 module.exports = declare((api, options) => {
-  let usedPlural = false;
+  let usedHelpers = new Set();
   let currentFunctionParams = new Set();
 
-  function normalizePluralKey(key) {
+  function normalizeKey(key) {
+    key = key.trim();
     if (key === 'zero') return 0;
     if (key === 'one') return 1;
     let match = key.match(/^=(\d)/);
@@ -14,19 +15,18 @@ module.exports = declare((api, options) => {
     return key;
   }
 
-  function buildPlural(entry) {
-    usedPlural = true;
+  function buildCallExpression(fnName, entry) {
+    usedHelpers.add(fnName);
     let options = t.objectExpression(
       Object.keys(entry.options).map(key => {
-
         let objValueAST = entry.options[key].value;
         let objValue;
         if (objValueAST.length === 1) {
           objValue = t.stringLiteral(objValueAST[0].value);
         } else {
-          throw new Error('Nested expressions in plurals not yet supported')
+          objValue = buildTemplateLiteral(objValueAST);
         }
-        let normalizedKey = normalizePluralKey(key);
+        let normalizedKey = normalizeKey(key);
         return t.objectProperty(
           typeof normalizedKey === "number"
             ? t.numericLiteral(normalizedKey)
@@ -34,15 +34,15 @@ module.exports = declare((api, options) => {
           objValue
         );
       })
-    )
-    currentFunctionParams.add(entry.value)
-    return t.callExpression(
-      t.identifier('plural'),
-      [t.identifier(entry.value), options]
-    )
+    );
+    currentFunctionParams.add(entry.value);
+    return t.callExpression(t.identifier(fnName), [
+      t.identifier(entry.value),
+      options
+    ]);
   }
-  function buildFunction(ast) {
-    currentFunctionParams = new Set();
+
+  function buildTemplateLiteral(ast) {
     let quasis = [];
     let expressions = [];
     for (let i = 0; i < ast.length; i++) {
@@ -61,8 +61,11 @@ module.exports = declare((api, options) => {
           currentFunctionParams.add(entry.value);
           if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
           break;
-        case 6:
-          expressions.push(buildPlural(entry));
+        case 5: // select
+          expressions.push(buildCallExpression('select', entry));
+          break;
+        case 6: // plural
+          expressions.push(buildCallExpression("plural", entry));
           break;
         // default:
         //   debugger;
@@ -71,7 +74,12 @@ module.exports = declare((api, options) => {
         quasis.push(t.templateElement({ value: '', raw: '' }, true));
       }
     }
-    let templateLiteral = t.templateLiteral(quasis, expressions);
+    return t.templateLiteral(quasis, expressions);
+  }
+
+  function buildFunction(ast) {
+    currentFunctionParams = new Set();
+    let templateLiteral = buildTemplateLiteral(ast)
     return t.arrowFunctionExpression(
       Array.from(currentFunctionParams).map(p => t.identifier(p)),
       templateLiteral
@@ -82,18 +90,20 @@ module.exports = declare((api, options) => {
 
     visitor: {
       Program: {
+        enter() {
+          usedHelpers = new Set();
+        },
         exit(path) {
-          if (usedPlural) {
-            let importDeclaration = t.importDeclaration([
-              t.importSpecifier(t.identifier("plural"), t.identifier("plural"))
-            ], t.stringLiteral("helpers"));
+          if (usedHelpers.size > 0) {
+            let importDeclaration = t.importDeclaration(
+              Array.from(usedHelpers).map(name => t.importSpecifier(t.identifier(name), t.identifier(name)))
+            , t.stringLiteral("helpers"));
             path.unshiftContainer("body", importDeclaration);
           }
         }
       },
       ObjectProperty({ node }) {
         if (t.isStringLiteral(node.value)) {
-          console.log('Process object property!');
           let icuAST = parse(node.value.value);
           if (icuAST.length === 1) return;
           node.value = buildFunction(icuAST);
