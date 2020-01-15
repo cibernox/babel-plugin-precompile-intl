@@ -1,12 +1,11 @@
-import babel from "babel-core";
-import plugin from "../";
-
-var example = `
-var foo = 1;
-if (foo) console.log(foo);
-`;
+const babel = require("babel-core");
+const plugin = require("../src");
+const fs = require('fs');
+const path = require('path');
 
 it("works", () => {
-  const { code } = babel.transform(example, { plugins: [plugin] });
-  expect(code).toMatchSnapshot();
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
 });

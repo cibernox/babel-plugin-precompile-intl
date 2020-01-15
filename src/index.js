@@ -1,21 +1,102 @@
-import { declare } from "@babel/helper-plugin-utils";
-import { types as t } from "@babel/core";
-// import { parse } from "intl-messageformat-parser";
+const { declare } = require("@babel/helper-plugin-utils");
+const { types: t } = require('@babel/core');
+const { parse } = require("intl-messageformat-parser");
 
-export default declare((api, options) => {
-  api.assertVersion(7);
+module.exports = declare((api, options) => {
+  let usedPlural = false;
+  let currentFunctionParams = new Set();
 
+  function normalizePluralKey(key) {
+    if (key === 'zero') return 0;
+    if (key === 'one') return 1;
+    let match = key.match(/^=(\d)/);
+    if (match) return parseInt(match[1], 10);
+    return key;
+  }
+
+  function buildPlural(entry) {
+    usedPlural = true;
+    let options = t.objectExpression(
+      Object.keys(entry.options).map(key => {
+
+        let objValueAST = entry.options[key].value;
+        let objValue;
+        if (objValueAST.length === 1) {
+          objValue = t.stringLiteral(objValueAST[0].value);
+        } else {
+          throw new Error('Nested expressions in plurals not yet supported')
+        }
+        let normalizedKey = normalizePluralKey(key);
+        return t.objectProperty(
+          typeof normalizedKey === "number"
+            ? t.numericLiteral(normalizedKey)
+            : t.identifier(normalizedKey),
+          objValue
+        );
+      })
+    )
+    currentFunctionParams.add(entry.value)
+    return t.callExpression(
+      t.identifier('plural'),
+      [t.identifier(entry.value), options]
+    )
+  }
+  function buildFunction(ast) {
+    currentFunctionParams = new Set();
+    let quasis = [];
+    let expressions = [];
+    for (let i = 0; i < ast.length; i++) {
+      let entry = ast[i];
+      switch(entry.type) {
+        case 0: // literal
+          quasis.push(
+            t.templateElement(
+              { value: entry.value, raw: entry.value },
+              i === ast.length - 1 // tail
+            )
+          );
+          break;
+        case 1: // intepolation
+          expressions.push(t.identifier(entry.value));
+          currentFunctionParams.add(entry.value);
+          if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
+          break;
+        case 6:
+          expressions.push(buildPlural(entry));
+          break;
+        // default:
+        //   debugger;
+      }
+      if (i === ast.length - 1 && entry.type !== 0) {
+        quasis.push(t.templateElement({ value: '', raw: '' }, true));
+      }
+    }
+    let templateLiteral = t.templateLiteral(quasis, expressions);
+    return t.arrowFunctionExpression(
+      Array.from(currentFunctionParams).map(p => t.identifier(p)),
+      templateLiteral
+    );
+  }
   return {
     name: "transform-precompile-icu",
 
     visitor: {
+      Program: {
+        exit(path) {
+          if (usedPlural) {
+            let importDeclaration = t.importDeclaration([
+              t.importSpecifier(t.identifier("plural"), t.identifier("plural"))
+            ], t.stringLiteral("helpers"));
+            path.unshiftContainer("body", importDeclaration);
+          }
+        }
+      },
       ObjectProperty({ node }) {
         if (t.isStringLiteral(node.value)) {
-          let tE = t.templateElement({value: node.value.value, raw: node.value.value});
-          node.value = t.arrowFunctionExpression(
-            [],
-            t.templateLiteral([tE],[])
-          );
+          console.log('Process object property!');
+          let icuAST = parse(node.value.value);
+          if (icuAST.length === 1) return;
+          node.value = buildFunction(icuAST);
         }
       }
     }
