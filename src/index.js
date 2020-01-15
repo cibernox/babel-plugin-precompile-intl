@@ -17,7 +17,7 @@ module.exports = declare((api, options) => {
 
   function buildCallExpression(fnName, entry) {
     usedHelpers.add(fnName);
-    if (fnName === "number" || fnName === "date" || fnName === "time") {
+    if (fnName === "__number" || fnName === "__date" || fnName === "__time") {
       let callArgs = [t.identifier(entry.value)];
       if (entry.style) callArgs.push(t.stringLiteral(entry.style));
       return t.callExpression(t.identifier(fnName), callArgs);
@@ -67,22 +67,22 @@ module.exports = declare((api, options) => {
           if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
           break;
         case 2: // Number format
-          expressions.push(buildCallExpression("number", entry));
+          expressions.push(buildCallExpression("__number", entry));
           currentFunctionParams.add(entry.value);
           break;
         case 3: // Date format
-          expressions.push(buildCallExpression("date", entry));
+          expressions.push(buildCallExpression("__date", entry));
           currentFunctionParams.add(entry.value);
           break;
         case 4: // Time format
-          expressions.push(buildCallExpression("time", entry));
+          expressions.push(buildCallExpression("__time", entry));
           currentFunctionParams.add(entry.value);
           break;
         case 5: // select
-          expressions.push(buildCallExpression("select", entry));
+          expressions.push(buildCallExpression("__select", entry));
           break;
         case 6: // plural
-          expressions.push(buildCallExpression("plural", entry));
+          expressions.push(buildCallExpression("__plural", entry));
           break;
         default:
           debugger;

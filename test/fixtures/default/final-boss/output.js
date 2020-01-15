@@ -1,18 +1,18 @@
-import { select, plural } from "helpers";
+import { __select, __plural } from "helpers";
 export default {
   nearby: "Find places near your location",
-  kilometer: (count, gender) => `This year ${select(gender, {
-    male: `he made ${plural(count, {
+  kilometer: (count, gender) => `This year ${__select(gender, {
+    male: `he made ${__plural(count, {
       0: "no kilometres",
       1: "one kilometre",
       other: `${count} kilometres`
     })}`,
-    female: `she made ${plural(count, {
+    female: `she made ${__plural(count, {
       0: "no kilometres",
       1: "one kilometre",
       other: `${count} kilometres`
     })}`,
-    other: `they made ${plural(count, {
+    other: `they made ${__plural(count, {
       0: "no kilometres",
       1: "one kilometre",
       other: `${count} kilometres`
