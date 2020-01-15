@@ -1,4 +1,4 @@
-import { __number } from "helpers";
+import { __number } from "icu-helpers";
 export default {
   nearby: "Find places near your location",
   regular: count => `I have ${__number(count)} cats`,

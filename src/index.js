@@ -114,7 +114,7 @@ module.exports = declare((api, options) => {
           if (usedHelpers.size > 0) {
             let importDeclaration = t.importDeclaration(
               Array.from(usedHelpers).map(name => t.importSpecifier(t.identifier(name), t.identifier(name)))
-            , t.stringLiteral("helpers"));
+            , t.stringLiteral("icu-helpers"));
             path.unshiftContainer("body", importDeclaration);
           }
         }

@@ -1,4 +1,4 @@
-import { __select, __plural } from "helpers";
+import { __select, __plural } from "icu-helpers";
 export default {
   nearby: "Find places near your location",
   kilometer: (count, gender) => `This year ${__select(gender, {
