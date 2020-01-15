@@ -17,6 +17,11 @@ module.exports = declare((api, options) => {
 
   function buildCallExpression(fnName, entry) {
     usedHelpers.add(fnName);
+    if (fnName === "number" || fnName === "date" || fnName === "time") {
+      let callArgs = [t.identifier(entry.value)];
+      if (entry.style) callArgs.push(t.stringLiteral(entry.style));
+      return t.callExpression(t.identifier(fnName), callArgs);
+    }
     let options = t.objectExpression(
       Object.keys(entry.options).map(key => {
         let objValueAST = entry.options[key].value;
@@ -61,14 +66,26 @@ module.exports = declare((api, options) => {
           currentFunctionParams.add(entry.value);
           if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
           break;
+        case 2: // Number format
+          expressions.push(buildCallExpression("number", entry));
+          currentFunctionParams.add(entry.value);
+          break;
+        case 3: // Date format
+          expressions.push(buildCallExpression("date", entry));
+          currentFunctionParams.add(entry.value);
+          break;
+        case 4: // Time format
+          expressions.push(buildCallExpression("time", entry));
+          currentFunctionParams.add(entry.value);
+          break;
         case 5: // select
-          expressions.push(buildCallExpression('select', entry));
+          expressions.push(buildCallExpression("select", entry));
           break;
         case 6: // plural
           expressions.push(buildCallExpression("plural", entry));
           break;
-        // default:
-        //   debugger;
+        default:
+          debugger;
       }
       if (i === ast.length - 1 && entry.type !== 0) {
         quasis.push(t.templateElement({ value: '', raw: '' }, true));

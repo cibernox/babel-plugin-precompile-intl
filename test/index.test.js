@@ -24,6 +24,27 @@ it("can transforms `select`", () => {
   expect(code).toBe(output);
 });
 
+it("can format numbers", () => {
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'format-numbers', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'format-numbers', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
+});
+
+it("can format dates", () => {
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'format-dates', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'format-dates', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
+});
+
+it("can format times", () => {
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'format-times', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'format-times', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
+});
+
 it("can transforms nested plurals and selects", () => {
   let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'final-boss', 'input.js'), 'UTF8');
   let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'final-boss', 'output.js'), 'UTF8');
