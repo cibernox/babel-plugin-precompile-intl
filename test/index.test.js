@@ -10,6 +10,13 @@ it("does not import functions if all keys are regular keys", () => {
   expect(code).toBe(output);
 });
 
+it("can transform interpolations", () => {
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-interpolations', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-interpolations', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
+});
+
 it("can transforms `plural`", () => {
   let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-plurals', 'input.js'), 'UTF8');
   let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-plurals', 'output.js'), 'UTF8');

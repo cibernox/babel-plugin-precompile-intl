@@ -98,7 +98,7 @@ module.exports = declare((api, options) => {
     currentFunctionParams = new Set();
     let templateLiteral = buildTemplateLiteral(ast)
     return t.arrowFunctionExpression(
-      Array.from(currentFunctionParams).map(p => t.identifier(p)),
+      Array.from(currentFunctionParams).sort().map(p => t.identifier(p)),
       templateLiteral
     );
   }
