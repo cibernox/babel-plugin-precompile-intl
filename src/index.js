@@ -1,6 +1,13 @@
 const { declare } = require("@babel/helper-plugin-utils");
 const { types: t } = require('@babel/core');
 const { parse } = require("intl-messageformat-parser");
+const HELPERS_MAP = {
+  2: "__number",
+  3: "__date",
+  4: "__time",
+  5: "__select",
+  6: "__plural",
+};
 
 module.exports = declare((api, options) => {
   let usedHelpers = new Set();
@@ -15,7 +22,8 @@ module.exports = declare((api, options) => {
     return key;
   }
 
-  function buildCallExpression(fnName, entry) {
+  function buildCallExpression(entry) {
+    let fnName = HELPERS_MAP[entry.type];
     usedHelpers.add(fnName);
     if (fnName === "__number" || fnName === "__date" || fnName === "__time") {
       let callArgs = [t.identifier(entry.value)];
@@ -67,22 +75,22 @@ module.exports = declare((api, options) => {
           if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
           break;
         case 2: // Number format
-          expressions.push(buildCallExpression("__number", entry));
+          expressions.push(buildCallExpression(entry));
           currentFunctionParams.add(entry.value);
           break;
         case 3: // Date format
-          expressions.push(buildCallExpression("__date", entry));
+          expressions.push(buildCallExpression(entry));
           currentFunctionParams.add(entry.value);
           break;
         case 4: // Time format
-          expressions.push(buildCallExpression("__time", entry));
+          expressions.push(buildCallExpression(entry));
           currentFunctionParams.add(entry.value);
           break;
         case 5: // select
-          expressions.push(buildCallExpression("__select", entry));
+          expressions.push(buildCallExpression(entry));
           break;
         case 6: // plural
-          expressions.push(buildCallExpression("__plural", entry));
+          expressions.push(buildCallExpression(entry));
           break;
         default:
           debugger;
@@ -96,10 +104,10 @@ module.exports = declare((api, options) => {
 
   function buildFunction(ast) {
     currentFunctionParams = new Set();
-    let templateLiteral = buildTemplateLiteral(ast)
+    let body = ast.length === 1 ? buildCallExpression(ast[0]) : buildTemplateLiteral(ast);
     return t.arrowFunctionExpression(
       Array.from(currentFunctionParams).sort().map(p => t.identifier(p)),
-      templateLiteral
+      body
     );
   }
   return {

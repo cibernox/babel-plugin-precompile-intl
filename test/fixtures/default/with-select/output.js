@@ -6,9 +6,9 @@ export default {
     female: "she made many kilometers",
     other: "they made many kilometers"
   })}`,
-  good: gender => `A ${__select(gender, {
+  good: gender => __select(gender, {
     male: "He is a good boy",
     female: "She is a good girl",
     other: "They are good fellas"
-  })}`
+  })
 };
