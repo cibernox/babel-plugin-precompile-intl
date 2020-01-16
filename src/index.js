@@ -113,7 +113,7 @@ module.exports = declare((api, options) => {
         exit(path) {
           if (usedHelpers.size > 0) {
             let importDeclaration = t.importDeclaration(
-              Array.from(usedHelpers).map(name => t.importSpecifier(t.identifier(name), t.identifier(name)))
+              Array.from(usedHelpers).sort().map(name => t.importSpecifier(t.identifier(name), t.identifier(name)))
             , t.stringLiteral("icu-helpers"));
             path.unshiftContainer("body", importDeclaration);
           }
@@ -124,6 +124,13 @@ module.exports = declare((api, options) => {
           let icuAST = parse(node.value.value);
           if (icuAST.length === 1) return;
           node.value = buildFunction(icuAST);
+        }
+      },
+      VariableDeclarator({ node }) {
+        if (t.isStringLiteral(node.init)) {
+          let icuAST = parse(node.init.value);
+          if (icuAST.length === 1) return;
+          node.init = buildFunction(icuAST);
         }
       }
     }

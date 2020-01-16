@@ -1,4 +1,8 @@
-import { __select, __plural } from "icu-helpers";
+import { __plural, __select } from "icu-helpers";
+export var foot = count => `${count} ${__plural(count, {
+  1: "foot",
+  other: "feet"
+})}`;
 export default {
   nearby: "Find places near your location",
   kilometer: (count, gender) => `This year ${__select(gender, {
@@ -17,5 +21,6 @@ export default {
       1: "one kilometre",
       other: `${count} kilometres`
     })}`
-  })}`
+  })}`,
+  foot
 };
