@@ -122,14 +122,14 @@ module.exports = declare((api, options) => {
       ObjectProperty({ node }) {
         if (t.isStringLiteral(node.value)) {
           let icuAST = parse(node.value.value);
-          if (icuAST.length === 1) return;
+          if (icuAST.length === 1 && icuAST[0].type === 0) return;
           node.value = buildFunction(icuAST);
         }
       },
       VariableDeclarator({ node }) {
         if (t.isStringLiteral(node.init)) {
           let icuAST = parse(node.init.value);
-          if (icuAST.length === 1) return;
+          if (icuAST.length === 1 && icuAST[0].type === 0) return;
           node.init = buildFunction(icuAST);
         }
       }
