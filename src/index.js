@@ -13,6 +13,7 @@ const HELPERS_MAP = {
 module.exports = declare((api, options) => {
   let usedHelpers = new Set();
   let currentFunctionParams = new Set();
+  let pluralsStack = [];
 
   function normalizeKey(key) {
     key = key.trim();
@@ -29,14 +30,17 @@ module.exports = declare((api, options) => {
       if (entry.style) callArgs.push(t.stringLiteral(entry.style));
       return t.callExpression(t.identifier(fnName), callArgs);
     }
+    if (fnName === '__plural') {
+      pluralsStack.push(entry)
+    }
     let options = t.objectExpression(
       Object.keys(entry.options).map(key => {
         let objValueAST = entry.options[key].value;
         let objValue;
-        if (objValueAST.length === 1) {
+        if (objValueAST.length === 1 && objValueAST[0].type === 0) {
           objValue = t.stringLiteral(objValueAST[0].value);
         } else {
-          objValue = buildTemplateLiteral(objValueAST);
+          objValue = objValueAST.length === 1 ? buildCallExpression(objValueAST[0]) : buildTemplateLiteral(objValueAST);
         }
         let normalizedKey = normalizeKey(key);
         return t.objectProperty(
@@ -47,6 +51,9 @@ module.exports = declare((api, options) => {
         );
       })
     );
+    if (fnName === "__plural") {
+      pluralsStack.pop();
+    }
     currentFunctionParams.add(entry.value);
     return t.callExpression(t.identifier(fnName), [
       t.identifier(entry.value),
@@ -91,6 +98,11 @@ module.exports = declare((api, options) => {
         case 6: // plural
           expressions.push(buildCallExpression(entry));
           break;
+        case 7: // # interpolation
+          let lastPlural = pluralsStack[pluralsStack.length - 1];
+          expressions.push(t.identifier(lastPlural.value));
+          if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
+          break;
         default:
           debugger;
       }
@@ -103,6 +115,7 @@ module.exports = declare((api, options) => {
 
   function buildFunction(ast) {
     currentFunctionParams = new Set();
+    pluralsStack = [];
     let body = ast.length === 1 ? buildCallExpression(ast[0]) : buildTemplateLiteral(ast);
     return t.arrowFunctionExpression(
       Array.from(currentFunctionParams).sort().map(p => t.identifier(p)),
@@ -130,6 +143,7 @@ module.exports = declare((api, options) => {
         if (t.isStringLiteral(node.value)) {
           let icuAST = parse(node.value.value);
           if (icuAST.length === 1 && icuAST[0].type === 0) return;
+          debugger;
           node.value = buildFunction(icuAST);
         }
       },
