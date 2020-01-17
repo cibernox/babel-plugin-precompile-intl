@@ -1,6 +1,6 @@
 import { __interpolate, __plural, __select } from "icu-helpers";
 export var foot = count => `${__interpolate(count)} ${__plural(count, {
-  1: "foot",
+  one: "foot",
   other: "feet"
 })}`;
 export default {
