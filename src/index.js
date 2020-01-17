@@ -16,8 +16,6 @@ module.exports = declare((api, options) => {
 
   function normalizeKey(key) {
     key = key.trim();
-    if (key === 'zero') return 0;
-    if (key === 'one') return 1;
     let match = key.match(/^=(\d)/);
     if (match) return parseInt(match[1], 10);
     return key;

@@ -8,17 +8,17 @@ export default {
   kilometer: (count, gender) => `This year ${__select(gender, {
     male: `he made ${__plural(count, {
       0: "no kilometres",
-      1: "one kilometre",
+      one: "one kilometre",
       other: `${__interpolate(count)} kilometres`
     })}`,
     female: `she made ${__plural(count, {
       0: "no kilometres",
-      1: "one kilometre",
+      one: "one kilometre",
       other: `${__interpolate(count)} kilometres`
     })}`,
     other: `they made ${__plural(count, {
       0: "no kilometres",
-      1: "one kilometre",
+      one: "one kilometre",
       other: `${__interpolate(count)} kilometres`
     })}`
   })}`,
