@@ -1,5 +1,5 @@
-import { __plural, __select } from "icu-helpers";
-export var foot = count => `${count} ${__plural(count, {
+import { __interpolate, __plural, __select } from "icu-helpers";
+export var foot = count => `${__interpolate(count)} ${__plural(count, {
   1: "foot",
   other: "feet"
 })}`;
@@ -9,17 +9,17 @@ export default {
     male: `he made ${__plural(count, {
       0: "no kilometres",
       1: "one kilometre",
-      other: `${count} kilometres`
+      other: `${__interpolate(count)} kilometres`
     })}`,
     female: `she made ${__plural(count, {
       0: "no kilometres",
       1: "one kilometre",
-      other: `${count} kilometres`
+      other: `${__interpolate(count)} kilometres`
     })}`,
     other: `they made ${__plural(count, {
       0: "no kilometres",
       1: "one kilometre",
-      other: `${count} kilometres`
+      other: `${__interpolate(count)} kilometres`
     })}`
   })}`,
   foot

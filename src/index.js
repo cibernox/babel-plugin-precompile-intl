@@ -2,6 +2,7 @@ const { declare } = require("@babel/helper-plugin-utils");
 const { types: t } = require('@babel/core');
 const { parse } = require("intl-messageformat-parser");
 const HELPERS_MAP = {
+  1: "__interpolate",
   2: "__number",
   3: "__date",
   4: "__time",
@@ -25,7 +26,7 @@ module.exports = declare((api, options) => {
   function buildCallExpression(entry) {
     let fnName = HELPERS_MAP[entry.type];
     usedHelpers.add(fnName);
-    if (fnName === "__number" || fnName === "__date" || fnName === "__time") {
+    if (fnName === "__interpolate" || fnName === "__number" || fnName === "__date" || fnName === "__time") {
       let callArgs = [t.identifier(entry.value)];
       if (entry.style) callArgs.push(t.stringLiteral(entry.style));
       return t.callExpression(t.identifier(fnName), callArgs);
@@ -70,7 +71,7 @@ module.exports = declare((api, options) => {
           );
           break;
         case 1: // intepolation
-          expressions.push(t.identifier(entry.value));
+          expressions.push(buildCallExpression(entry));
           currentFunctionParams.add(entry.value);
           if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
           break;

@@ -1,5 +1,6 @@
+import { __interpolate } from "icu-helpers";
 export default {
   nearby: "Find places near your location",
-  kilometer: count => `${count} kilometers`,
-  exactDistance: (cm, km, m) => `${km}km, ${m} meters and ${cm} centimeters`
+  kilometer: count => `${__interpolate(count)} kilometers`,
+  exactDistance: (cm, km, m) => `${__interpolate(km)}km, ${__interpolate(m)} meters and ${__interpolate(cm)} centimeters`
 };
