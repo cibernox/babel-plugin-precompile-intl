@@ -31,6 +31,13 @@ it("can transforms plurals with # interpolations", () => {
   expect(code).toBe(output);
 });
 
+it("can transforms plurals with offsets", () => {
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'plural-with-offsets', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'plural-with-offsets', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
+});
+
 it("can transforms `select`", () => {
   let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-select', 'input.js'), 'UTF8');
   let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-select', 'output.js'), 'UTF8');

@@ -55,10 +55,12 @@ module.exports = declare((api, options) => {
       pluralsStack.pop();
     }
     currentFunctionParams.add(entry.value);
-    return t.callExpression(t.identifier(fnName), [
-      t.identifier(entry.value),
-      options
-    ]);
+    let callArguments = [t.identifier(entry.value)];
+    if (fnName === "__plural" && entry.offset !== 0) {
+      callArguments.push(t.numericLiteral(entry.offset));
+    }
+    callArguments.push(options)
+    return t.callExpression(t.identifier(fnName), callArguments);
   }
 
   function buildTemplateLiteral(ast) {
@@ -100,7 +102,17 @@ module.exports = declare((api, options) => {
           break;
         case 7: // # interpolation
           let lastPlural = pluralsStack[pluralsStack.length - 1];
-          expressions.push(t.identifier(lastPlural.value));
+          if (lastPlural.offset !== null && lastPlural.offset !== 0) {
+            expressions.push(
+              t.binaryExpression(
+                "-",
+                t.identifier(lastPlural.value),
+                t.numericLiteral(lastPlural.offset)
+              )
+            );
+          } else {
+            expressions.push(t.identifier(lastPlural.value));
+          }
           if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
           break;
         default:
@@ -143,7 +155,6 @@ module.exports = declare((api, options) => {
         if (t.isStringLiteral(node.value)) {
           let icuAST = parse(node.value.value);
           if (icuAST.length === 1 && icuAST[0].type === 0) return;
-          debugger;
           node.value = buildFunction(icuAST);
         }
       },
