@@ -135,7 +135,7 @@ module.exports = declare((api, options) => {
     );
   }
   return {
-    name: "transform-precompile-icu",
+    name: "precompile-intl",
 
     visitor: {
       Program: {
