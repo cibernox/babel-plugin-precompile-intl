@@ -1,4 +1,4 @@
-import { __plural } from "icu-helpers";
+import { __plural } from "precompile-intl-runtime";
 export default {
   gym: trainers => __plural(trainers, 1, {
     0: "The gym is empty",

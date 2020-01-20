@@ -1,4 +1,4 @@
-import { __interpolate, __plural, __select } from "icu-helpers";
+import { __interpolate, __plural, __select } from "precompile-intl-runtime";
 export var foot = count => `${__interpolate(count)} ${__plural(count, {
   one: "foot",
   other: "feet"

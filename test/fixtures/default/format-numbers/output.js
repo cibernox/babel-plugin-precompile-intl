@@ -1,4 +1,4 @@
-import { __number } from "icu-helpers";
+import { __number } from "precompile-intl-runtime";
 export default {
   nearby: "Find places near your location",
   regular: count => `I have ${__number(count)} cats`,

@@ -146,7 +146,7 @@ module.exports = declare((api, options) => {
           if (usedHelpers.size > 0) {
             let importDeclaration = t.importDeclaration(
               Array.from(usedHelpers).sort().map(name => t.importSpecifier(t.identifier(name), t.identifier(name)))
-            , t.stringLiteral("icu-helpers"));
+            , t.stringLiteral("precompile-intl-runtime"));
             path.unshiftContainer("body", importDeclaration);
           }
         }

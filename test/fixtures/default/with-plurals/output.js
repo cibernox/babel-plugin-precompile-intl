@@ -1,4 +1,4 @@
-import { __interpolate, __plural } from "icu-helpers";
+import { __interpolate, __plural } from "precompile-intl-runtime";
 export default {
   nearby: "Find places near your location",
   kilometer: count => `${__interpolate(count)} ${__plural(count, {

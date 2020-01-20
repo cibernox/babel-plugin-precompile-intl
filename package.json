@@ -1,8 +1,12 @@
 {
-  "name": "babel-plugin-precompile-icu",
+  "name": "babel-plugin-precompile-intl",
   "version": "0.0.1",
-  "description": "Compile ICU strings to functions",
-  "repository": "",
+  "description": "Compile translations in ICU message format to invocable functions at build time",
+  "repository": "https://github.com/cibernox/babel-plugin-precompile-intl",
+  "author": {
+    "name": "Miguel Camba",
+    "email": "miguel.camba@gmail.com"
+  },
   "license": "MIT",
   "scripts": {
     "test": "jest test"
@@ -19,7 +23,10 @@
   },
   "keywords": [
     "babel-plugin",
-    "ICU"
+    "intl",
+    "precompile",
+    "translations",
+    "i18n"
   ],
   "peerDependencies": {
     "@babel/core": "^7.0.0-0"

@@ -1,4 +1,4 @@
-import { __select } from "icu-helpers";
+import { __select } from "precompile-intl-runtime";
 export default {
   nearby: "Find places near your location",
   kilometer: gender => `This year ${__select(gender, {
