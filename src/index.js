@@ -9,11 +9,27 @@ const HELPERS_MAP = {
   5: "__select",
   6: "__plural",
 };
+const PLURAL_ABBREVIATIONS = {
+  zero: 'z',
+  one: 'o',
+  two: 't',
+  few: 'f',
+  many: 'm',
+  other: 'h'
+};
 
 module.exports = declare((api, options) => {
+  api.assertVersion("^7.0");
   let usedHelpers = new Set();
   let currentFunctionParams = new Set();
   let pluralsStack = [];
+
+  function normalizePluralKey(key) {
+    key = key.trim();
+    let match = key.match(/^=(\d)/);
+    if (match) return parseInt(match[1], 10);
+    return PLURAL_ABBREVIATIONS[key] || key;
+  }
 
   function normalizeKey(key) {
     key = key.trim();
@@ -42,7 +58,7 @@ module.exports = declare((api, options) => {
         } else {
           objValue = objValueAST.length === 1 ? buildCallExpression(objValueAST[0]) : buildTemplateLiteral(objValueAST);
         }
-        let normalizedKey = normalizeKey(key);
+        let normalizedKey = fnName === '__plural' ? normalizePluralKey(key) : normalizeKey(key);
         return t.objectProperty(
           typeof normalizedKey === "number"
             ? t.numericLiteral(normalizedKey)
