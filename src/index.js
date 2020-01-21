@@ -40,7 +40,11 @@ module.exports = declare((api, options) => {
 
   function buildCallExpression(entry) {
     let fnName = HELPERS_MAP[entry.type];
-    usedHelpers.add(fnName);
+    if (fnName === "__plural" && entry.offset !== 0) {
+      usedHelpers.add('__offsetPlural');
+    } else {
+      usedHelpers.add(fnName);
+    }
     if (fnName === "__interpolate" || fnName === "__number" || fnName === "__date" || fnName === "__time") {
       let callArgs = [t.identifier(entry.value)];
       if (entry.style) callArgs.push(t.stringLiteral(entry.style));
@@ -71,12 +75,14 @@ module.exports = declare((api, options) => {
       pluralsStack.pop();
     }
     currentFunctionParams.add(entry.value);
+    let fnIdentifier = t.identifier(fnName);
     let callArguments = [t.identifier(entry.value)];
     if (fnName === "__plural" && entry.offset !== 0) {
+      fnIdentifier =  t.identifier("__offsetPlural");
       callArguments.push(t.numericLiteral(entry.offset));
     }
     callArguments.push(options)
-    return t.callExpression(t.identifier(fnName), callArguments);
+    return t.callExpression(fnIdentifier, callArguments);
   }
 
   function buildTemplateLiteral(ast) {
