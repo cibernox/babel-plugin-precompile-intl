@@ -156,6 +156,19 @@ module.exports = declare((api, options) => {
       body
     );
   }
+
+  function flattenObjectProperties(object, propsArray, currentPrefix) {
+    return object.properties.forEach(op => {
+      let name = op.key.name;
+      if (t.isObjectExpression(op.value)) {
+        debugger;
+        flattenObjectProperties(op.value, propsArray, currentPrefix ? currentPrefix + '.' + name : name);
+      } else {
+        let key = currentPrefix ? t.stringLiteral(currentPrefix + "." + name) : t.identifier(name);
+        propsArray.push([key, op.value]);
+      }
+    });
+  }
   return {
     name: "precompile-intl",
 
@@ -186,6 +199,20 @@ module.exports = declare((api, options) => {
           if (icuAST.length === 1 && icuAST[0].type === 0) return;
           node.init = buildFunction(icuAST);
         }
+      },
+      ExportDefaultDeclaration({ node }) {
+        let properties = [];
+        flattenObjectProperties(node.declaration, properties);
+        node.declaration = t.objectExpression(
+          properties.map(([k, v]) => {
+            t.objectProperty(k,v)
+            if (t.isIdentifier(k) && t.isIdentifier(v) && k.name === v.name) {
+              return t.objectProperty(k, v, false, true);
+            } else {
+              return t.objectProperty(k,v)
+            }
+          })
+        );
       }
     }
   };
