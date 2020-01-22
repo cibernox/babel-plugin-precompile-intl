@@ -72,3 +72,10 @@ it("can transforms nested plurals and selects", () => {
   const { code } = babel.transform(input, { plugins: [plugin] });
   expect(code).toBe(output);
 });
+
+it("flattens the object, joining keys with a dot", () => {
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'flattening', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'flattening', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
+});
