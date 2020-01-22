@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-precompile-intl",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Compile translations in ICU message format to invocable functions at build time",
   "repository": "https://github.com/cibernox/babel-plugin-precompile-intl",
   "author": {
