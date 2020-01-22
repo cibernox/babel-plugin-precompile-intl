@@ -159,12 +159,13 @@ module.exports = declare((api, options) => {
 
   function flattenObjectProperties(object, propsArray, currentPrefix) {
     return object.properties.forEach(op => {
-      let name = op.key.name;
+      let keyIsStringLiteral = t.isStringLiteral(op.key);
+      let name = keyIsStringLiteral ? op.key.value : op.key.name;
+      keyIsStringLiteral = keyIsStringLiteral || !!currentPrefix;
       if (t.isObjectExpression(op.value)) {
-        debugger;
         flattenObjectProperties(op.value, propsArray, currentPrefix ? currentPrefix + '.' + name : name);
       } else {
-        let key = currentPrefix ? t.stringLiteral(currentPrefix + "." + name) : t.identifier(name);
+        let key = keyIsStringLiteral ? t.stringLiteral(currentPrefix + "." + name) : t.identifier(name);
         propsArray.push([key, op.value]);
       }
     });
