@@ -2,6 +2,7 @@ let tmp = 'other';
 let tmp2 = 'yellow';
 export default {
   nearby: "Find places near your location",
+  "quoted": "Hello",
   kilometer: {
     a: "This year {gender, select, male {he made many kilometers} female {she made many kilometers} other {they made many kilometers}}",
     b: tmp,

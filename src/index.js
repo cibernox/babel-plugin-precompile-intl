@@ -162,10 +162,11 @@ module.exports = declare((api, options) => {
       let keyIsStringLiteral = t.isStringLiteral(op.key);
       let name = keyIsStringLiteral ? op.key.value : op.key.name;
       keyIsStringLiteral = keyIsStringLiteral || !!currentPrefix;
+      name = currentPrefix ? currentPrefix + '.' + name : name;
       if (t.isObjectExpression(op.value)) {
-        flattenObjectProperties(op.value, propsArray, currentPrefix ? currentPrefix + '.' + name : name);
+        flattenObjectProperties(op.value, propsArray, name);
       } else {
-        let key = keyIsStringLiteral ? t.stringLiteral(currentPrefix + "." + name) : t.identifier(name);
+        let key = keyIsStringLiteral ? t.stringLiteral(name) : t.identifier(name);
         propsArray.push([key, op.value]);
       }
     });
