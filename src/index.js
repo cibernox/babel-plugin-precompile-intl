@@ -23,7 +23,8 @@ module.exports = declare((api, options) => {
   let usedHelpers = new Set();
   let currentFunctionParams = new Set();
   let pluralsStack = [];
-
+  let runtimeImportPath = options.runtimeImportPath || "precompile-intl-runtime";
+  
   function normalizePluralKey(key) {
     key = key.trim();
     let match = key.match(/^=(\d)/);
@@ -183,7 +184,7 @@ module.exports = declare((api, options) => {
           if (usedHelpers.size > 0) {
             let importDeclaration = t.importDeclaration(
               Array.from(usedHelpers).sort().map(name => t.importSpecifier(t.identifier(name), t.identifier(name)))
-            , t.stringLiteral("precompile-intl-runtime"));
+            , t.stringLiteral(runtimeImportPath));
             path.unshiftContainer("body", importDeclaration);
           }
         }
