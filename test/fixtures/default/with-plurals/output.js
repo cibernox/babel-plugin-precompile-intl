@@ -4,5 +4,9 @@ export default {
   kilometer: count => `${__interpolate(count)} ${__plural(count, {
     1: "kilometer",
     h: "kilometers"
-  })}`
+  })}`,
+  kilometerWithTrailingInterpolation: count => `${__plural(count, {
+    1: "one kilometer",
+    h: `${count} kilometers`
+  })} to go`
 };

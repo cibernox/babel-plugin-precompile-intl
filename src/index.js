@@ -87,6 +87,7 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
     }
 
     function buildTemplateLiteral(ast) {
+      debugger;
       let quasis = [];
       let expressions = [];
       for (let i = 0; i < ast.length; i++) {
@@ -144,6 +145,11 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
         if (i === ast.length - 1 && entry.type !== 0) {
           quasis.push(t.templateElement({ value: '', raw: '' }, true));
         }
+      }
+      // If the number of quasis must be one more than the number of expressions (because expressions go
+      // in between). If that's not the case it means we need an empty string as first quasis.
+      if (quasis.length === expressions.length) {
+        quasis.unshift(t.templateElement({ value: '', raw: '' }, false));
       }
       return t.templateLiteral(quasis, expressions);
     }
