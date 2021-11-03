@@ -27,7 +27,7 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
 
     function normalizePluralKey(key) {
       key = key.trim();
-      let match = key.match(/^=(\d)/);
+      let match = key.match(/^=(\d+)/);
       if (match) return parseInt(match[1], 10);
       return PLURAL_ABBREVIATIONS[key] || key;
     }
