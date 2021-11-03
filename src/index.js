@@ -48,6 +48,7 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
       }
       if (fnName === "__interpolate" || fnName === "__number" || fnName === "__date" || fnName === "__time") {
         let callArgs = [t.identifier(entry.value)];
+        currentFunctionParams.add(entry.value);
         if (entry.style) callArgs.push(t.stringLiteral(entry.style));
         return t.callExpression(t.identifier(fnName), callArgs);
       }
@@ -87,7 +88,6 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
     }
 
     function buildTemplateLiteral(ast) {
-      debugger;
       let quasis = [];
       let expressions = [];
       for (let i = 0; i < ast.length; i++) {
