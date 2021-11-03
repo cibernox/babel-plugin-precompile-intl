@@ -1,6 +1,6 @@
 const { declare } = require("@babel/helper-plugin-utils");
 const { types: t } = require('@babel/core');
-const { parse } = require("intl-messageformat-parser");
+const { parse } = require("@formatjs/icu-messageformat-parser");
 const HELPERS_MAP = {
   1: "__interpolate",
   2: "__number",
@@ -197,7 +197,7 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
         },
         ObjectProperty({ node }) {
           if (t.isStringLiteral(node.value)) {
-            let icuAST = parse(node.value.value);
+            let icuAST = parse(node.value.value, {ignoreTag: true});
             if (icuAST.length === 1 && icuAST[0].type === 0) return;
             node.value = buildFunction(icuAST);
           }
