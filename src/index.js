@@ -18,7 +18,7 @@ const PLURAL_ABBREVIATIONS = {
   other: 'h'
 };
 
-module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
+function buildICUPlugin(runtimeImportPath = "precompile-intl-runtime") {
   return declare((api, options) => {
     api.assertVersion("^7.0");
     let usedHelpers = new Set();
@@ -226,4 +226,7 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
       }
     };
   });
+};
+module.exports = { 
+  buildICUPlugin 
 };

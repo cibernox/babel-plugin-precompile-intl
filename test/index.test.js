@@ -1,8 +1,8 @@
 const babel = require("@babel/core");
-const buildPlugin = require("../src");
+const { buildICUPlugin } = require("../src");
 const fs = require('fs');
 const path = require('path');
-const plugin = buildPlugin();
+const plugin = buildICUPlugin();
 
 it("does not import functions if all keys are regular keys", () => {
   let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'plain-keys-only', 'input.js'), 'UTF8');
