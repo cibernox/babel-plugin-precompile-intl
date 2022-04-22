@@ -65,3 +65,35 @@ Your minification step will transform keys like this:
 On average the minified output is between 5% and 10% smaller than the original input, and the runtime
 library is much smaller than other alternatives and even smaller because it can be tree-shaken so only
 the helpers your translations need are included, varying the weight of the library between 1k and just a few bytes.
+
+If you store translations in `*.js` file, you may use template literals (strings with backticks). These strings may span multiple lines in the file.
+
+```js
+export default {
+  notice: `
+    Great to see you again!
+    ... long text ...
+  `
+}
+```
+
+Note: you should not use JavaScript variables and expressions in these template literals. This syntax *is not* supported:
+
+```js
+const name = "Gregory"
+export default {
+  notice: `Hello, ${name}`
+}
+```
+
+It will be better to use interpolations and pass values on call:
+
+```js
+// Translations file.
+export default {
+  notice: `Hello, {name}`
+}
+
+// Page, layout, etc. See `precompile-intl-runtime`.
+$t('notice', {values: {name: 'Gregory'}})
+```

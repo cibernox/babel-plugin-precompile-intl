@@ -80,3 +80,10 @@ it("flattens the object, joining keys with a dot", () => {
   const { code } = babel.transform(input, { plugins: [plugin] });
   expect(code).toBe(output);
 });
+
+it("works with template literals", () => {
+  let input = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-template-literals', 'input.js'), 'UTF8');
+  let output = fs.readFileSync(path.join('test', 'fixtures', 'default', 'with-template-literals', 'output.js'), 'UTF8');
+  const { code } = babel.transform(input, { plugins: [plugin] });
+  expect(code).toBe(output);
+});
