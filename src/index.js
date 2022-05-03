@@ -46,7 +46,28 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
       } else {
         usedHelpers.add(fnName);
       }
-      if (fnName === "__interpolate" || fnName === "__number" || fnName === "__date" || fnName === "__time") {
+      if (fnName === "__number") {
+        let callArgs = [t.identifier(entry.value)];
+        currentFunctionParams.add(entry.value);
+        if (entry.style) {
+          if (typeof entry.style === 'string') {
+            callArgs.push(t.objectExpression([t.objectProperty(t.identifier('style'), t.stringLiteral(entry.style))]));
+          } else {
+            let options = t.objectExpression(
+              Object.keys(entry.style.parsedOptions).map(key => {
+                let val = entry.style.parsedOptions[key]
+                return t.objectProperty(
+                  t.identifier(key),
+                  typeof val === "number" ? t.numericLiteral(val) : t.stringLiteral(val),
+                );
+              })
+            ); 
+            callArgs.push(options);           
+          }
+        }
+        return t.callExpression(t.identifier(fnName), callArgs);        
+      }
+      if (fnName === "__interpolate" || fnName === "__date" || fnName === "__time") {
         let callArgs = [t.identifier(entry.value)];
         currentFunctionParams.add(entry.value);
         if (entry.style) callArgs.push(t.stringLiteral(entry.style));
