@@ -17,12 +17,16 @@ export default {
   scientific: distance => `Distance to star ${__number(distance, {
     notation: "scientific"
   })}`,
-  scientificSigned: balance => `Distance to star ${__number(balance, {
+  scientificSigned: distance => `Distance to star ${__number(distance, {
     notation: "scientific",
     signDisplay: "always"
   })}`,
-  scientificSignedWith2Exponent: balance => `Distance to star ${__number(balance, {
+  scientificSignedWith2Exponent: distance => `Distance to star ${__number(distance, {
     notation: "scientific",
+    signDisplay: "always"
+  })}`,
+  engineeringSigned: distance => `Distance to star ${__number(distance, {
+    notation: "engineering",
     signDisplay: "always"
   })}`,
   complexMeasurementUnit: distance => `Distance to destination: ${__number(distance, {
