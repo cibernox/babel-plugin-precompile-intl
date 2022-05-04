@@ -1,7 +1,8 @@
 export default {
   nearby: "Find places near your location",
   regular: "I have {count, number} cats",
-  percentage: "Almost {blackCount, number, percent} of them are black.",
+  customFormat: "Almost {blackCount, number, custom} of them are black.",
+  percentage: "Almost {blackCount, number, ::percent} of them are black.",
   percentageWithTwoDecimals: "Almost {blackCount, number, :: percent .00} of them are black.",
   currency: "Account balance {balance, number, :: currency/EUR}",
   scientific: "Distance to star {distance, number, ::scientific}",

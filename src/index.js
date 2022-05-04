@@ -51,7 +51,7 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
         currentFunctionParams.add(entry.value);
         if (entry.style) {
           if (typeof entry.style === 'string') {
-            callArgs.push(t.objectExpression([t.objectProperty(t.identifier('style'), t.stringLiteral(entry.style))]));
+            callArgs.push(t.stringLiteral(entry.style))
           } else {
             let options = t.objectExpression(
               Object.keys(entry.style.parsedOptions).map(key => {

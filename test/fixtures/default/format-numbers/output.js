@@ -2,6 +2,7 @@ import { __number } from "precompile-intl-runtime";
 export default {
   nearby: "Find places near your location",
   regular: count => `I have ${__number(count)} cats`,
+  customFormat: blackCount => `Almost ${__number(blackCount, "custom")} of them are black.`,
   percentage: blackCount => `Almost ${__number(blackCount, {
     style: "percent"
   })} of them are black.`,
