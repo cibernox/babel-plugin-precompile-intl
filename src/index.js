@@ -46,7 +46,34 @@ module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
       } else {
         usedHelpers.add(fnName);
       }
-      if (fnName === "__interpolate" || fnName === "__number" || fnName === "__date" || fnName === "__time") {
+      if (fnName === "__number") {
+        let callArgs = [t.identifier(entry.value)];
+        currentFunctionParams.add(entry.value);
+        if (entry.style) {
+          if (typeof entry.style === 'string') {
+            // TODO: Special rule for 'percent' ?
+            callArgs.push(t.stringLiteral(entry.style))
+          } else {
+            // TODO: Being a compiler gives us the chance to be better at some things than other libraries
+            // For instance, when using `{style: 'unit', unit: XXXXX}` unit can only be one of a known list of units
+            // (see https://stackoverflow.com/questions/68035616/invalid-unit-argument-for-intl-numberformat-with-electric-units-volt-joule)
+            // Any unit but those will throw a runtime error, but we could error or at least show a warning to the user
+            // when invalid. P.e. a common mistake could be to use `unit: 'km'` (wrong) instead of the correct (`unit: 'kilometer'`).
+            let options = t.objectExpression(
+              Object.keys(entry.style.parsedOptions).map(key => {
+                let val = entry.style.parsedOptions[key]
+                return t.objectProperty(
+                  t.identifier(key),
+                  typeof val === "number" ? t.numericLiteral(val) : t.stringLiteral(val),
+                );
+              })
+            ); 
+            callArgs.push(options);           
+          }
+        }
+        return t.callExpression(t.identifier(fnName), callArgs);        
+      }
+      if (fnName === "__interpolate" || fnName === "__date" || fnName === "__time") {
         let callArgs = [t.identifier(entry.value)];
         currentFunctionParams.add(entry.value);
         if (entry.style) callArgs.push(t.stringLiteral(entry.style));
