@@ -11,6 +11,10 @@ export default {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })} of them are black.`,
+  percentageWithScale: blackCount => `Almost ${__number(blackCount, {
+    style: "percent",
+    scale: 0.01
+  })} of them are black.`,
   currency: balance => `Account balance ${__number(balance, {
     style: "currency",
     currency: "EUR"
