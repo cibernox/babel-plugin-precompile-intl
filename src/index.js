@@ -1,6 +1,6 @@
-const { declare } = require("@babel/helper-plugin-utils");
-const { types: t } = require('@babel/core');
-const { parse } = require("@formatjs/icu-messageformat-parser");
+import { declare } from "@babel/helper-plugin-utils";
+import { parse } from '@formatjs/icu-messageformat-parser';
+
 const HELPERS_MAP = {
   1: "__interpolate",
   2: "__number",
@@ -18,9 +18,9 @@ const PLURAL_ABBREVIATIONS = {
   other: 'h'
 };
 
-module.exports = function build(runtimeImportPath = "precompile-intl-runtime") {
-  return declare((api, options) => {
-    api.assertVersion("^7.0");
+export default function build(runtimeImportPath = "precompile-intl-runtime") {
+  return declare(({ types: t, assertVersion }, options) => {
+    assertVersion("^7.0");
     let usedHelpers = new Set();
     let currentFunctionParams = new Set();
     let pluralsStack = [];

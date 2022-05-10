@@ -1,7 +1,7 @@
-const babel = require("@babel/core");
-const buildPlugin = require("../src");
-const fs = require('fs');
-const path = require('path');
+import buildPlugin from '../src';
+import fs from 'fs';
+import path from 'path';
+import babel from '@babel/core';
 const plugin = buildPlugin();
 
 it("does not import functions if all keys are regular keys", () => {
