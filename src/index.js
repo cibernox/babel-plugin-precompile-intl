@@ -87,7 +87,17 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
     }
 
     function buildNumberCallExpression(entry) {
-      let callArgs = [t.identifier(entry.value)];
+      let callArgs = [];
+      if (entry.style?.parsedOptions?.scale) {
+        // For number skeletons containing `scale/100` and similar, which is not an option I18n understand,
+        // it replaces `__number(n, options) by `__number(n / 100, options)`.
+        callArgs.push(
+          t.binaryExpression("/", t.identifier(entry.value), t.numericLiteral(entry.style.parsedOptions.scale))
+        );
+        delete entry.style.parsedOptions.scale
+      } else {
+        callArgs.push(t.identifier(entry.value));
+      }
       currentFunctionParams.add(entry.value);
       if (entry.style) {
         if (typeof entry.style === 'string') {
