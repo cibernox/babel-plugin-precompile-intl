@@ -41,11 +41,7 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
 
     function buildCallExpression(entry) {
       let fnName = HELPERS_MAP[entry.type];
-      if (fnName === "__plural" && entry.offset !== 0) {
-        usedHelpers.add('__offsetPlural');
-      } else {
-        usedHelpers.add(fnName);
-      }
+      usedHelpers.add(fnName === "__plural" && entry.offset !== 0 ? '__offsetPlural' : fnName);
       if (fnName === "__number") {
         return buildNumberCallExpression(entry);
       }
