@@ -12,7 +12,10 @@
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "args": ["test"]
+      "args": ["test"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      }
     }
   ]
 }
