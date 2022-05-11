@@ -1,3 +1,5 @@
+# 0.4.0-beta.2
+- Initial support for `scale` in number skeletons.
 # 0.4.0-beta.1
 - Transform to ES Modules.
 # 0.4.0-beta.0
