@@ -26,10 +26,6 @@ export default {
     notation: "scientific",
     signDisplay: "always"
   })}`,
-  scientificSignedWith2Exponent: distance => `Distance to star ${__number(distance, {
-    notation: "scientific",
-    signDisplay: "always"
-  })}`,
   engineeringSigned: distance => `Distance to star ${__number(distance, {
     notation: "engineering",
     signDisplay: "always"
