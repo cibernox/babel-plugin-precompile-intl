@@ -15,6 +15,7 @@ export default {
     style: "percent",
     maximumFractionDigits: 2
   })} of them are black.`,
+  rounded: price => `The dress I liked was ${__number(price)}`,
   currency: balance => `Account balance ${__number(balance, {
     style: "currency",
     currency: "EUR"

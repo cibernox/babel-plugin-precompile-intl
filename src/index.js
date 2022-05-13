@@ -103,7 +103,7 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
         if (typeof entry.style === 'string') {
           // TODO: Special rule for 'percent' ?
           callArgs.push(t.stringLiteral(entry.style))
-        } else {
+        } else if (Object.keys(entry.style.parsedOptions).length > 0) {
           // TODO: Being a compiler gives us the chance to be better at some things than other libraries
           // For instance, when using `{style: 'unit', unit: XXXXX}` unit can only be one of a known list of units
           // (see https://stackoverflow.com/questions/68035616/invalid-unit-argument-for-intl-numberformat-with-electric-units-volt-joule)

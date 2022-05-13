@@ -5,6 +5,7 @@ export default {
   percentage: "Almost {blackCount, number, ::percent} of them are black.",
   percentageWithTwoDecimals: "Almost {blackCount, number, :: percent .00} of them are black.",
   percentageWithScale: "Almost {blackCount, number, :: percent scale/0.01 .##} of them are black.",
+  rounded: "The dress I liked was {price, number, :: rounding-mode-ceiling}",
   currency: "Account balance {balance, number, :: currency/EUR}",
   scientific: "Distance to star {distance, number, ::scientific}",
   scientificSigned: "Distance to star {distance, number, ::scientific/sign-always}",
