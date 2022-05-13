@@ -16,6 +16,9 @@ export default {
     maximumFractionDigits: 2
   })} of them are black.`,
   rounded: price => `The dress I liked was ${__number(price)}`,
+  noDecimals: price => `The dress I liked was ${__number(price, {
+    maximumFractionDigits: 0
+  })}`,
   currency: balance => `Account balance ${__number(balance, {
     style: "currency",
     currency: "EUR"
