@@ -237,6 +237,11 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
             let icuAST = parse(node.value.value, {ignoreTag: true});
             if (icuAST.length === 1 && icuAST[0].type === 0) return;
             node.value = buildFunction(icuAST);
+          } else if (t.isTemplateLiteral(node.value) && node.value.quasis.length == 1) {
+            const quasis_value = node.value.quasis[0].value;
+            let icuAST = parse(quasis_value.raw, {ignoreTag: true});
+            if (icuAST.length === 1 && icuAST[0].type === 0) return;
+            node.value = buildFunction(icuAST);
           }
         },
         VariableDeclarator({ node }) {
