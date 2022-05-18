@@ -1,3 +1,5 @@
+# 0.4.0
+- Support template literals in when translations are defined in javascript files (#17)
 # 0.4.0-beta.2
 - Initial support for `scale` in number skeletons.
 # 0.4.0-beta.1
