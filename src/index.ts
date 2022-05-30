@@ -12,14 +12,20 @@ import {
   isStringLiteral,
 } from "@babel/types";
 import type { 
+  ArgumentElement,
+  DateElement,
   ExtendedNumberFormatOptions,
   MessageFormatElement,
   NumberElement,
   PluralElement,
+  PluralOrSelectOption,
+  SelectElement,
+  TimeElement,
   TYPE 
 } from '@formatjs/icu-messageformat-parser';
 import { parse } from '@formatjs/icu-messageformat-parser';
 import { 
+  isArgumentElement,
   isDateElement,
   isDateTimeSkeleton,
   isLiteralElement,
@@ -79,70 +85,26 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
     }
 
     function buildCallExpression(entry: MessageFormatElement) {
-      let fnName = HELPERS_MAP[entry.type];
-      if (isLiteralElement(entry)) throw new Error('Literal elements not supported!')
-      if (isTagElement(entry)) throw new Error('Tag elements not supported!')
-      if (isPoundElement(entry)) throw new Error('Pound elements not supported!')
-      if (isPluralElement(entry)) {
-        usedHelpers.add(entry.offset !== 0 ? '__offsetPlural' : '__plural');
-      } else {
-        usedHelpers.add(fnName);
-      }
+      if (isLiteralElement(entry)) throw new Error('Literal elements not supported!');
+      if (isTagElement(entry)) throw new Error('Tag elements not supported!');
+      if (isPoundElement(entry)) throw new Error('Pound elements not supported!');
       if (isNumberElement(entry)) {
         return buildNumberCallExpression(entry);
       }
       if (isDateElement(entry) || isTimeElement(entry)) {
-        let callArgs: (Identifier | StringLiteral)[]  = [t.identifier(entry.value)];
-        currentFunctionParams.add(entry.value);
-        if (isTimeElement(entry) || isDateElement(entry)) {
-          if (isDateTimeSkeleton(entry.style)) throw new Error('Datetime skeletons not supported yet');
-          if (entry.style) {
-            callArgs.push(t.stringLiteral(entry.style));
-          }
-        }
-        return t.callExpression(t.identifier(fnName), callArgs);
+        return buildDateOrTimeCallExpression(entry)
       }
-      // if (isPluralElement(entry) && fnName === '__plural') {
-      if (isPluralElement(entry)) {
-        pluralsStack.push(entry)
+      if (isArgumentElement(entry)) {
+        return buildInterpolateCallExpression(entry);
       }
-      if (!isSelectElement(entry) && !isPluralElement(entry)) {
-        currentFunctionParams.add(entry.value);
-        return t.callExpression(t.identifier(fnName), [t.identifier(entry.value)]);
+      if (isSelectElement(entry)) {
+        return buildSelectCallExpression(entry);
       }
-      let options = t.objectExpression(
-        Object.keys(entry.options).map(key => {
-          let objValueAST = entry.options[key].value;
-          let objValue;
-          if (objValueAST.length === 1 && objValueAST[0].type === 0) {
-            objValue = t.stringLiteral(objValueAST[0].value);
-          } else {
-            objValue = objValueAST.length === 1 ? buildCallExpression(objValueAST[0]) : buildTemplateLiteral(objValueAST);
-          }
-          let normalizedKey = fnName === '__plural' ? normalizePluralKey(key) : normalizeKey(key);
-          return t.objectProperty(
-            typeof normalizedKey === "number"
-              ? t.numericLiteral(normalizedKey)
-              : t.identifier(normalizedKey),
-            objValue
-          );
-        })
-      );
-      if (fnName === "__plural") {
-        pluralsStack.pop();
-      }
-      currentFunctionParams.add(entry.value);
-      let fnIdentifier = t.identifier(fnName);
-      let callArguments: Expression[] = [t.identifier(entry.value)];
-      if (isPluralElement(entry) && entry.offset !== 0) {
-        fnIdentifier =  t.identifier("__offsetPlural");
-        callArguments.push(t.numericLiteral(entry.offset));
-      }
-      callArguments.push(options)
-      return t.callExpression(fnIdentifier, callArguments);
+      return buildPluralCallExpression(entry);
     }
 
     function buildNumberCallExpression(entry: NumberElement) {
+      usedHelpers.add(HELPERS_MAP[entry.type]);
       let callArgs = [];
       if (isNumberSkeleton(entry.style) && entry.style.parsedOptions.scale) {
         callArgs.push(
@@ -177,6 +139,81 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
         callArgs.push(t.stringLiteral(entry.style));
       }
       return t.callExpression(t.identifier('__number'), callArgs);
+    }
+
+    function buildDateOrTimeCallExpression(entry: DateElement | TimeElement) {
+      let fnName = HELPERS_MAP[entry.type];
+      usedHelpers.add(fnName);
+      let callArgs: (Identifier | StringLiteral)[]  = [t.identifier(entry.value)];
+      currentFunctionParams.add(entry.value);
+      if (isDateTimeSkeleton(entry.style)) throw new Error('Datetime skeletons not supported yet');
+      if (entry.style) {
+        callArgs.push(t.stringLiteral(entry.style));
+      }
+      return t.callExpression(t.identifier(fnName), callArgs);      
+    }
+
+    function buildInterpolateCallExpression(entry: ArgumentElement) {
+      let fnName = HELPERS_MAP[entry.type];
+      usedHelpers.add(fnName);
+      currentFunctionParams.add(entry.value);
+      return t.callExpression(t.identifier(fnName), [t.identifier(entry.value)]);
+
+    }
+
+    function buildPluralCallExpression(entry: PluralElement) {
+      let fnName = HELPERS_MAP[entry.type];
+      pluralsStack.push(entry)
+      usedHelpers.add(entry.offset !== 0 ? '__offsetPlural' : '__plural');
+      let options = t.objectExpression(
+        Object.keys(entry.options).map(key => {
+          let objValueAST = entry.options[key].value;
+          let objValue: Expression;
+          if (objValueAST.length === 1 && objValueAST[0].type === 0) {
+            objValue = t.stringLiteral(objValueAST[0].value);
+          } else {
+            objValue = objValueAST.length === 1 ? buildCallExpression(objValueAST[0]) : buildTemplateLiteral(objValueAST);
+          }
+          let normalizedKey = normalizePluralKey(key);
+          return t.objectProperty(
+            typeof normalizedKey === "number"
+              ? t.numericLiteral(normalizedKey)
+              : t.identifier(normalizedKey),
+            objValue
+          );
+        })
+      );
+      pluralsStack.pop();
+      currentFunctionParams.add(entry.value);
+      if (entry.offset !== 0) {
+        return t.callExpression(t.identifier("__offsetPlural"), [t.identifier(entry.value), t.numericLiteral(entry.offset), options]);
+      } else {
+        return t.callExpression(t.identifier(fnName), [t.identifier(entry.value), options]);
+      }
+    }
+
+    function buildSelectCallExpression(entry: SelectElement) {
+      let fnName = HELPERS_MAP[entry.type];
+      usedHelpers.add(fnName);
+      entry.options
+      let options = t.objectExpression(
+        Object.keys(entry.options).map(key => {
+          let objValueAST = entry.options[key].value;
+          let objValue: Expression;
+          if (objValueAST.length === 1 && objValueAST[0].type === 0) {
+            objValue = t.stringLiteral(objValueAST[0].value);
+          } else {
+            objValue = objValueAST.length === 1 ? buildCallExpression(objValueAST[0]) : buildTemplateLiteral(objValueAST);
+          }
+          let normalizedKey = normalizeKey(key);
+          return t.objectProperty(
+            typeof normalizedKey === "number" ? t.numericLiteral(normalizedKey) : t.identifier(normalizedKey),
+            objValue
+          );
+        })
+      );
+      currentFunctionParams.add(entry.value);
+      return t.callExpression(t.identifier(fnName), [t.identifier(entry.value), options]);
     }
 
     function buildTemplateLiteral(ast: MessageFormatElement[]) {
