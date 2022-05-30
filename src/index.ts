@@ -1,15 +1,22 @@
 import { declare } from "@babel/helper-plugin-utils";
-import { parse } from '@formatjs/icu-messageformat-parser';
+import { isObjectProperty, isStringLiteral, Identifier, ObjectExpression, StringLiteral, isIdentifier, isObjectExpression, NumericLiteral, Expression } from "@babel/types";
+import { ExtendedNumberFormatOptions, isArgumentElement, isDateElement, isDateTimeSkeleton, isLiteralElement, isNumberElement, isNumberSkeleton, isPluralElement, isPoundElement, isTagElement, isTimeElement, MessageFormatElement, NumberElement, parse, PluralElement, TYPE } from '@formatjs/icu-messageformat-parser';
 
-const HELPERS_MAP = {
-  1: "__interpolate",
-  2: "__number",
-  3: "__date",
-  4: "__time",
-  5: "__select",
-  6: "__plural",
+type HelperFunctions = "__interpolate" | "__number" | "__date" | "__time" | "__select" | "__plural" | "__offsetPlural";
+const HELPERS_MAP: Record<TYPE, HelperFunctions> = {
+  [TYPE.literal]: "__interpolate",
+  [TYPE.argument]: "__interpolate",
+  [TYPE.number]: "__number",
+  [TYPE.date]: "__date",
+  [TYPE.time]: "__time",
+  [TYPE.select]: "__select",
+  [TYPE.plural]: "__plural",
+  [TYPE.pound]: "__interpolate", // This should not happen
+  [TYPE.tag]: "__interpolate", // This should not happen
 };
-const PLURAL_ABBREVIATIONS = {
+type PluralTypes = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+type PluralAbbreviation = 'z' | 'o' | 't' | 'f' | 'm' | 'h';
+const PLURAL_ABBREVIATIONS: Record<PluralTypes, PluralAbbreviation> = {
   zero: 'z',
   one: 'o',
   two: 't',
@@ -17,41 +24,54 @@ const PLURAL_ABBREVIATIONS = {
   many: 'm',
   other: 'h'
 };
-
+type PropertyTuple = [Identifier | StringLiteral, any];
 export default function build(runtimeImportPath = "precompile-intl-runtime") {
   return declare(({ types: t, assertVersion }, options) => {
     assertVersion("^7.0");
-    let usedHelpers = new Set();
-    let currentFunctionParams = new Set();
-    let pluralsStack = [];
+    let usedHelpers: Set<HelperFunctions> = new Set();
+    let currentFunctionParams: Set<string> = new Set();
+    let pluralsStack: PluralElement[] = [];
 
-    function normalizePluralKey(key) {
+    function normalizePluralKey(key: string | PluralTypes): number | PluralAbbreviation {
       key = key.trim();
       let match = key.match(/^=(\d+)/);
       if (match) return parseInt(match[1], 10);
-      return PLURAL_ABBREVIATIONS[key] || key;
+      return PLURAL_ABBREVIATIONS[key as PluralTypes] || key;
     }
 
-    function normalizeKey(key) {
+    function normalizeKey(key: string): number | string {
       key = key.trim();
       let match = key.match(/^=(\d)/);
       if (match) return parseInt(match[1], 10);
       return key;
     }
 
-    function buildCallExpression(entry) {
+    function buildCallExpression(entry: MessageFormatElement) {
       let fnName = HELPERS_MAP[entry.type];
-      usedHelpers.add(fnName === "__plural" && entry.offset !== 0 ? '__offsetPlural' : fnName);
-      if (fnName === "__number") {
+      if (isLiteralElement(entry)) throw new Error('Literal elements not supported!')
+      if (isTagElement(entry)) throw new Error('Tag elements not supported!')
+      if (isPoundElement(entry)) throw new Error('Pound elements not supported!')
+      if (isPluralElement(entry)) {
+        usedHelpers.add(entry.offset !== 0 ? '__offsetPlural' : '__plural');
+      } else {
+        usedHelpers.add(fnName);
+      }
+      if (isNumberElement(entry)) {
         return buildNumberCallExpression(entry);
       }
-      if (fnName === "__interpolate" || fnName === "__date" || fnName === "__time") {
-        let callArgs = [t.identifier(entry.value)];
+      if (isDateElement(entry) || isTimeElement(entry) || isArgumentElement(entry)) {
+        let callArgs: (Identifier | StringLiteral)[]  = [t.identifier(entry.value)];
         currentFunctionParams.add(entry.value);
-        if (entry.style) callArgs.push(t.stringLiteral(entry.style));
+        if (isTimeElement(entry) || isDateElement(entry)) {
+          if (isDateTimeSkeleton(entry.style)) throw new Error('Datetime skeletons not supported yet');
+          if (entry.style) {
+            callArgs.push(t.stringLiteral(entry.style));
+          }
+        }
         return t.callExpression(t.identifier(fnName), callArgs);
       }
-      if (fnName === '__plural') {
+      // if (isPluralElement(entry) && fnName === '__plural') {
+      if (isPluralElement(entry)) {
         pluralsStack.push(entry)
       }
       let options = t.objectExpression(
@@ -77,8 +97,8 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
       }
       currentFunctionParams.add(entry.value);
       let fnIdentifier = t.identifier(fnName);
-      let callArguments = [t.identifier(entry.value)];
-      if (fnName === "__plural" && entry.offset !== 0) {
+      let callArguments: Expression[] = [t.identifier(entry.value)];
+      if (isPluralElement(entry) && entry.offset !== 0) {
         fnIdentifier =  t.identifier("__offsetPlural");
         callArguments.push(t.numericLiteral(entry.offset));
       }
@@ -86,20 +106,18 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
       return t.callExpression(fnIdentifier, callArguments);
     }
 
-    function buildNumberCallExpression(entry) {
+    function buildNumberCallExpression(entry: NumberElement) {
       let callArgs = [];
-      if (entry.style?.parsedOptions?.scale) {
-        // For number skeletons containing `scale/100` and similar, which is not an option I18n understand,
-        // it replaces `__number(n, options) by `__number(n / 100, options)`.
+      if (isNumberSkeleton(entry.style) && entry.style.parsedOptions.scale) {
         callArgs.push(
           t.binaryExpression("/", t.identifier(entry.value), t.numericLiteral(entry.style.parsedOptions.scale))
         );
-        delete entry.style.parsedOptions.scale
+        delete entry.style.parsedOptions.scale        
       } else {
         callArgs.push(t.identifier(entry.value));
       }
       currentFunctionParams.add(entry.value);
-      if (entry.style) {
+      if (isNumberSkeleton(entry.style)) {
         if (typeof entry.style === 'string') {
           // TODO: Special rule for 'percent' ?
           callArgs.push(t.stringLiteral(entry.style))
@@ -109,9 +127,11 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
           // (see https://stackoverflow.com/questions/68035616/invalid-unit-argument-for-intl-numberformat-with-electric-units-volt-joule)
           // Any unit but those will throw a runtime error, but we could error or at least show a warning to the user
           // when invalid. P.e. a common mistake could be to use `unit: 'km'` (wrong) instead of the correct (`unit: 'kilometer'`).
+          let keys = Object.keys(entry.style.parsedOptions) as (keyof ExtendedNumberFormatOptions)[];
           let options = t.objectExpression(
-            Object.keys(entry.style.parsedOptions).map(key => {
-              let val = entry.style.parsedOptions[key]
+            keys.map(key => {
+              if (!isNumberSkeleton(entry.style)) throw new Error('The entry should have had a number skeleton')
+              let val = entry.style.parsedOptions[key] as number | string;
               return t.objectProperty(
                 t.identifier(key),
                 typeof val === "number" ? t.numericLiteral(val) : t.stringLiteral(val),
@@ -124,7 +144,7 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
       return t.callExpression(t.identifier('__number'), callArgs);
     }
 
-    function buildTemplateLiteral(ast) {
+    function buildTemplateLiteral(ast: MessageFormatElement[]) {
       let quasis = [];
       let expressions = [];
       for (let i = 0; i < ast.length; i++) {
@@ -133,7 +153,8 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
           case 0: // literal
             quasis.push(
               t.templateElement(
-                { value: entry.value, raw: entry.value },
+                // { value: entry.value, raw: entry.value }, this is not valid anymore?
+                { cooked: entry.value, raw: entry.value },
                 i === ast.length - 1 // tail
               )
             );
@@ -141,7 +162,7 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
           case 1: // intepolation
             expressions.push(buildCallExpression(entry));
             currentFunctionParams.add(entry.value);
-            if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
+            if (i === 0) quasis.push(t.templateElement({ cooked: '', raw: '' }, false));
             break;
           case 2: // Number format
             expressions.push(buildCallExpression(entry));
@@ -174,24 +195,24 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
             } else {
               expressions.push(t.identifier(lastPlural.value));
             }
-            if (i === 0) quasis.push(t.templateElement({ value: '', raw: '' }, false));
+            if (i === 0) quasis.push(t.templateElement({ cooked: '', raw: '' }, false));
             break;
           default:
             debugger;
         }
         if (i === ast.length - 1 && entry.type !== 0) {
-          quasis.push(t.templateElement({ value: '', raw: '' }, true));
+          quasis.push(t.templateElement({ cooked: '', raw: '' }, true));
         }
       }
       // If the number of quasis must be one more than the number of expressions (because expressions go
       // in between). If that's not the case it means we need an empty string as first quasis.
       if (quasis.length === expressions.length) {
-        quasis.unshift(t.templateElement({ value: '', raw: '' }, false));
+        quasis.unshift(t.templateElement({ cooked: '', raw: '' }, false));
       }
       return t.templateLiteral(quasis, expressions);
     }
 
-    function buildFunction(ast) {
+    function buildFunction(ast: MessageFormatElement[]) {
       currentFunctionParams = new Set();
       pluralsStack = [];
       let body = ast.length === 1 ? buildCallExpression(ast[0]) : buildTemplateLiteral(ast);
@@ -201,16 +222,16 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
       );
     }
 
-    function flattenObjectProperties(object, propsArray, currentPrefix) {
+    function flattenObjectProperties(object: ObjectExpression, propsArray: PropertyTuple[], currentPrefix?: string) {
       return object.properties.forEach(op => {
-        let keyIsStringLiteral = t.isStringLiteral(op.key);
-        let name = keyIsStringLiteral ? op.key.value : op.key.name;
-        keyIsStringLiteral = keyIsStringLiteral || !!currentPrefix;
+        if (!isObjectProperty(op)) throw new Error('Exported objects can only contain regular properties');
+        if (!isStringLiteral(op.key) && !isIdentifier(op.key)) throw new Error('Object keys for translations can only contain strings or identifiers');
+        let name = isStringLiteral(op.key) ? op.key.value : op.key.name;
         name = currentPrefix ? currentPrefix + '.' + name : name;
         if (t.isObjectExpression(op.value)) {
           flattenObjectProperties(op.value, propsArray, name);
         } else {
-          let key = keyIsStringLiteral ? t.stringLiteral(name) : t.identifier(name);
+          let key = (isStringLiteral(op.key) || !!currentPrefix) ? t.stringLiteral(name) : t.identifier(name);
           propsArray.push([key, op.value]);
         }
       });
@@ -252,7 +273,9 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
           }
         },
         ExportDefaultDeclaration({ node }) {
-          let properties = [];
+          // let properties: (Identifier | StringLiteral)[] = [];
+          let properties: PropertyTuple[] = [];
+          if (!isObjectExpression(node.declaration)) throw new Error('The default export must be an object');
           flattenObjectProperties(node.declaration, properties);
           node.declaration = t.objectExpression(
             properties.map(([k, v]) => {
