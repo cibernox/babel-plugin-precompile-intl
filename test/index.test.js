@@ -1,4 +1,4 @@
-import buildPlugin from '../src';
+import buildPlugin from '../dist';
 import fs from 'fs';
 import path from 'path';
 import babel from '@babel/core';

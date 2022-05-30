@@ -1,18 +1,49 @@
 import { declare } from "@babel/helper-plugin-utils";
-import { isObjectProperty, isStringLiteral, Identifier, ObjectExpression, StringLiteral, isIdentifier, isObjectExpression, NumericLiteral, Expression } from "@babel/types";
-import { ExtendedNumberFormatOptions, isArgumentElement, isDateElement, isDateTimeSkeleton, isLiteralElement, isNumberElement, isNumberSkeleton, isPluralElement, isPoundElement, isTagElement, isTimeElement, MessageFormatElement, NumberElement, parse, PluralElement, TYPE } from '@formatjs/icu-messageformat-parser';
+import type { 
+  Expression,
+  Identifier,
+  ObjectExpression,
+  StringLiteral,
+} from "@babel/types";
+import { 
+  isIdentifier,
+  isObjectExpression,
+  isObjectProperty,
+  isStringLiteral,
+} from "@babel/types";
+import type { 
+  ExtendedNumberFormatOptions,
+  MessageFormatElement,
+  NumberElement,
+  PluralElement,
+  TYPE 
+} from '@formatjs/icu-messageformat-parser';
+import { parse } from '@formatjs/icu-messageformat-parser';
+import { 
+  isDateElement,
+  isDateTimeSkeleton,
+  isLiteralElement,
+  isNumberElement,
+  isNumberSkeleton,
+  isPluralElement,
+  isPoundElement,
+  isSelectElement,
+  isTagElement,
+  isTimeElement,
+} from '@formatjs/icu-messageformat-parser/types';
+
 
 type HelperFunctions = "__interpolate" | "__number" | "__date" | "__time" | "__select" | "__plural" | "__offsetPlural";
 const HELPERS_MAP: Record<TYPE, HelperFunctions> = {
-  [TYPE.literal]: "__interpolate",
-  [TYPE.argument]: "__interpolate",
-  [TYPE.number]: "__number",
-  [TYPE.date]: "__date",
-  [TYPE.time]: "__time",
-  [TYPE.select]: "__select",
-  [TYPE.plural]: "__plural",
-  [TYPE.pound]: "__interpolate", // This should not happen
-  [TYPE.tag]: "__interpolate", // This should not happen
+  0: "__interpolate",
+  1: "__interpolate",
+  2: "__number",
+  3: "__date",
+  4: "__time",
+  5: "__select",
+  6: "__plural",
+  7: "__interpolate", // This should not happen
+  8: "__interpolate", // This should not happen
 };
 type PluralTypes = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 type PluralAbbreviation = 'z' | 'o' | 't' | 'f' | 'm' | 'h';
@@ -25,6 +56,7 @@ const PLURAL_ABBREVIATIONS: Record<PluralTypes, PluralAbbreviation> = {
   other: 'h'
 };
 type PropertyTuple = [Identifier | StringLiteral, any];
+
 export default function build(runtimeImportPath = "precompile-intl-runtime") {
   return declare(({ types: t, assertVersion }, options) => {
     assertVersion("^7.0");
@@ -59,7 +91,7 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
       if (isNumberElement(entry)) {
         return buildNumberCallExpression(entry);
       }
-      if (isDateElement(entry) || isTimeElement(entry) || isArgumentElement(entry)) {
+      if (isDateElement(entry) || isTimeElement(entry)) {
         let callArgs: (Identifier | StringLiteral)[]  = [t.identifier(entry.value)];
         currentFunctionParams.add(entry.value);
         if (isTimeElement(entry) || isDateElement(entry)) {
@@ -73,6 +105,10 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
       // if (isPluralElement(entry) && fnName === '__plural') {
       if (isPluralElement(entry)) {
         pluralsStack.push(entry)
+      }
+      if (!isSelectElement(entry) && !isPluralElement(entry)) {
+        currentFunctionParams.add(entry.value);
+        return t.callExpression(t.identifier(fnName), [t.identifier(entry.value)]);
       }
       let options = t.objectExpression(
         Object.keys(entry.options).map(key => {
