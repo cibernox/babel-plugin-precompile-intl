@@ -10,7 +10,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest test"
+    "prepublish": "npm run test",
+    "test": "npm run build && NODE_OPTIONS=--experimental-vm-modules jest test"
   },
   "publishConfig": {
     "access": "public"
