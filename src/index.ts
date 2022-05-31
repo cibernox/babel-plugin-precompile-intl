@@ -36,7 +36,7 @@ import {
   isSelectElement,
   isTagElement,
   isTimeElement,
-} from '@formatjs/icu-messageformat-parser/types';
+} from '@formatjs/icu-messageformat-parser/types.js';
 
 
 type HelperFunctions = "__interpolate" | "__number" | "__date" | "__time" | "__select" | "__plural" | "__offsetPlural";

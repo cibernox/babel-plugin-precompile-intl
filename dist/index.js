@@ -1,7 +1,7 @@
 import { declare } from "@babel/helper-plugin-utils";
 import { isIdentifier, isObjectExpression, isObjectProperty, isStringLiteral, } from "@babel/types";
 import { parse } from '@formatjs/icu-messageformat-parser';
-import { isArgumentElement, isDateElement, isDateTimeSkeleton, isLiteralElement, isNumberElement, isNumberSkeleton, isPoundElement, isSelectElement, isTagElement, isTimeElement, } from '@formatjs/icu-messageformat-parser/types';
+import { isArgumentElement, isDateElement, isDateTimeSkeleton, isLiteralElement, isNumberElement, isNumberSkeleton, isPoundElement, isSelectElement, isTagElement, isTimeElement, } from '@formatjs/icu-messageformat-parser/types.js';
 const HELPERS_MAP = {
     0: "__interpolate",
     1: "__interpolate",
