@@ -4,6 +4,7 @@ import type {
   Identifier,
   ObjectExpression,
   StringLiteral,
+  TemplateElement
 } from "@babel/types";
 import { 
   isIdentifier,
@@ -18,7 +19,6 @@ import type {
   MessageFormatElement,
   NumberElement,
   PluralElement,
-  PluralOrSelectOption,
   SelectElement,
   TimeElement,
   TYPE 
@@ -31,7 +31,6 @@ import {
   isLiteralElement,
   isNumberElement,
   isNumberSkeleton,
-  isPluralElement,
   isPoundElement,
   isSelectElement,
   isTagElement,
@@ -41,7 +40,7 @@ import {
 
 type HelperFunctions = "__interpolate" | "__number" | "__date" | "__time" | "__select" | "__plural" | "__offsetPlural";
 const HELPERS_MAP: Record<TYPE, HelperFunctions> = {
-  0: "__interpolate",
+  0: "__interpolate", // This should not happen
   1: "__interpolate",
   2: "__number",
   3: "__date",
@@ -217,8 +216,8 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
     }
 
     function buildTemplateLiteral(ast: MessageFormatElement[]) {
-      let quasis = [];
-      let expressions = [];
+      let quasis: TemplateElement[] = [];
+      let expressions: Expression[] = [];
       for (let i = 0; i < ast.length; i++) {
         let entry = ast[i];
         switch(entry.type) {
