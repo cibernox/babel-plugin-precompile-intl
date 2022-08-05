@@ -213,9 +213,12 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
                     quasis.push(t.templateElement({ cooked: '', raw: '' }, true));
                 }
             }
+            if (quasis.length === expressions.length && quasis.length === 0) {
+                return t.stringLiteral(''); // If there's no data, return an empty string. No need to use backquotes.
+            }
             // If the number of quasis must be one more than the number of expressions (because expressions go
             // in between). If that's not the case it means we need an empty string as first quasis.
-            if (quasis.length === expressions.length) {
+            while (quasis.length <= expressions.length) {
                 quasis.unshift(t.templateElement({ cooked: '', raw: '' }, false));
             }
             return t.templateLiteral(quasis, expressions);
@@ -224,6 +227,9 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
             currentFunctionParams = new Set();
             pluralsStack = [];
             let body = ast.length === 1 ? buildCallExpression(ast[0]) : buildTemplateLiteral(ast);
+            if (Array.from(currentFunctionParams).length === 0) {
+                return body;
+            }
             return t.arrowFunctionExpression(Array.from(currentFunctionParams).sort().map(p => t.identifier(p)), body);
         }
         function flattenObjectProperties(object, propsArray, currentPrefix) {

@@ -16,5 +16,14 @@ export default {
     3: "a trio of cats",
     12: "a dozen cats",
     h: `exactly ${numCats} cats`
+  })}`,
+  duration: (months, years) => `${__plural(years, {
+    0: "",
+    o: "next year",
+    h: `${years} years from now`
+  })}${__plural(months, {
+    0: "",
+    o: "and one month",
+    h: `and ${months} months`
   })}`
 };
