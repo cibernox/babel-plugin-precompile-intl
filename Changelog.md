@@ -1,3 +1,6 @@
+# 0.5.2
+- Fix edge case when two plurals are contiguous with nothing in between.
+
 # 0.4.0
 - Support template literals in when translations are defined in javascript files (#17)
 # 0.4.0-beta.2
