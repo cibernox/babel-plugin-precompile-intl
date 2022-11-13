@@ -16,6 +16,7 @@ import type {
   ArgumentElement,
   DateElement,
   ExtendedNumberFormatOptions,
+  
   MessageFormatElement,
   NumberElement,
   PluralElement,
@@ -125,10 +126,14 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
           let options = t.objectExpression(
             keys.map(key => {
               if (!isNumberSkeleton(entry.style)) throw new Error('The entry should have had a number skeleton')
-              let val = entry.style.parsedOptions[key] as number | string;
+              let val = entry.style.parsedOptions[key] as number | string | boolean;
               return t.objectProperty(
                 t.identifier(key),
-                typeof val === "number" ? t.numericLiteral(val) : t.stringLiteral(val),
+                typeof val === "number"
+                  ? t.numericLiteral(val)
+                  : typeof val === "boolean"
+                    ? t.booleanLiteral(val)
+                    : t.stringLiteral(val),
               );
             })
           );
@@ -143,11 +148,28 @@ export default function build(runtimeImportPath = "precompile-intl-runtime") {
     function buildDateOrTimeCallExpression(entry: DateElement | TimeElement) {
       let fnName = HELPERS_MAP[entry.type];
       usedHelpers.add(fnName);
-      let callArgs: (Identifier | StringLiteral)[]  = [t.identifier(entry.value)];
+      let callArgs: (Identifier | StringLiteral | ObjectExpression)[]  = [t.identifier(entry.value)];
       currentFunctionParams.add(entry.value);
-      if (isDateTimeSkeleton(entry.style)) throw new Error('Datetime skeletons not supported yet');
-      if (entry.style) {
+      // if (isDateTimeSkeleton(entry.style)) throw new Error('Datetime skeletons not supported yet');
+      if (typeof entry.style === "string") {
         callArgs.push(t.stringLiteral(entry.style));
+      } else if (isDateTimeSkeleton(entry.style)) {
+        if (Object.keys(entry.style.parsedOptions).length > 0) {
+          let keys = Object.keys(entry.style.parsedOptions) as (keyof Intl.DateTimeFormatOptions)[];
+          let options = t.objectExpression(
+            keys.map(key => {
+              if (!isDateTimeSkeleton(entry.style)) throw new Error('The entry should have had a number skeleton')
+              let val = entry.style.parsedOptions[key] as string | boolean;
+              return t.objectProperty(
+                t.identifier(key),
+                typeof val === "string"
+                  ? t.stringLiteral(val)
+                  : t.booleanLiteral(val),
+              );
+            })
+          );
+          callArgs.push(options);
+        }
       }
       return t.callExpression(t.identifier(fnName), callArgs);      
     }
